@@ -1,7 +1,14 @@
 package com.example.nilss.mqttlabb3;
 
+import android.Manifest;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.support.constraint.ConstraintLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -9,9 +16,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -23,8 +32,12 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private static final String TAG = "MainActivity";
+    private static final String BeaconID = "88888888-8888-8888-8888-888888888888";
     private String serverAndPort = "tcp://m21.cloudmqtt.com:18431";
     private MqttAndroidClient client;
     private Button publishBtn;
@@ -34,12 +47,14 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private String username = "splbrgpc";
     private String password = "Ef3r5zQAS7k4";
     private BeaconManager beaconManager;
+    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
         beaconManager.bind(this);
         publishBtn = findViewById(R.id.publishBtn);
         subBtn = findViewById(R.id.subBtn);
@@ -59,6 +74,48 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
             }
         });
         connect(username, password);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android M Permission check 
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("This app needs location access");
+                builder.setMessage("Please grant location access so this app can detect beacons.");
+                builder.setPositiveButton(android.R.string.ok, null);
+                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    public void onDismiss(DialogInterface dialog) {
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+                    }
+                });
+                builder.show();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_COARSE_LOCATION: {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "coarse location permission granted");
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Functionality limited");
+                    builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons when in the background.");
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                        }
+
+                    });
+                    builder.show();
+                }
+                return;
+            }
+        }
     }
 
     private void connect(String userName, String password){
@@ -144,29 +201,44 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
         });
     }
 
+    public void onDestroy(){
+        super.onDestroy();
+        beaconManager.unbind(this);
+    }
+
     @Override
     public void onBeaconServiceConnect() {
-        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+        beaconManager.addRangeNotifier(new RangeNotifier() {
             @Override
-            public void didEnterRegion(Region region) {
-                Log.i(TAG, "BEACON DETECTED");
-            }
+            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                Iterator iter = beacons.iterator();
+                ConstraintLayout constraintLayout = findViewById(R.id.container);
+                while(iter.hasNext()){
+                    Beacon beacon = (Beacon) iter.next();
+                    if(beacon.getId1().toString().equals(BeaconID)) {
+                        Log.i(TAG, "The first beacon I see is about "+beacon.getDistance()+" meters away." + beacon.getId1());
+                        if(beacon.getId2().toString().equals("0")) {
+                            constraintLayout.setBackgroundColor(Color.RED);
+                        }
+                        if(beacon.getId2().toString().equals("1")) {
+                            constraintLayout.setBackgroundColor(Color.GREEN);
+                        }
+                        if(beacon.getId2().toString().equals("2")) {
+                            constraintLayout.setBackgroundColor(Color.BLUE);
+                        }
+                    }
 
-            @Override
-            public void didExitRegion(Region region) {
-                Log.i(TAG, "BEACON EXITED");
-            }
-
-            @Override
-            public void didDetermineStateForRegion(int i, Region region) {
-                Log.i(TAG, "I have just switched " + i);
+                }
+                /*if (beacons.size() > 0) {
+                    Log.i(TAG, "The first beacon I see is about "+beacons.iterator().next().getDistance()+" meters away." + beacons.iterator().next().getId1());
+                }*/
             }
         });
 
-        try{
-            beaconManager.startMonitoringBeaconsInRegion(new Region("lala", null, null, null));
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        try {
+            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+
+
+        } catch (RemoteException e) {    }
     }
 }
