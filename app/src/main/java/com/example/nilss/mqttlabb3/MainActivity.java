@@ -1,6 +1,7 @@
 package com.example.nilss.mqttlabb3;
 
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -8,6 +9,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.Region;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -18,7 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private static final String TAG = "MainActivity";
     private String serverAndPort = "tcp://m21.cloudmqtt.com:18431";
     private MqttAndroidClient client;
@@ -28,11 +33,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvMessage;
     private String username = "splbrgpc";
     private String password = "Ef3r5zQAS7k4";
+    private BeaconManager beaconManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.bind(this);
         publishBtn = findViewById(R.id.publishBtn);
         subBtn = findViewById(R.id.subBtn);
         etMessage = findViewById(R.id.etMessage);
@@ -134,5 +142,31 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    public void onBeaconServiceConnect() {
+        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+            @Override
+            public void didEnterRegion(Region region) {
+                Log.i(TAG, "BEACON DETECTED");
+            }
+
+            @Override
+            public void didExitRegion(Region region) {
+                Log.i(TAG, "BEACON EXITED");
+            }
+
+            @Override
+            public void didDetermineStateForRegion(int i, Region region) {
+                Log.i(TAG, "I have just switched " + i);
+            }
+        });
+
+        try{
+            beaconManager.startMonitoringBeaconsInRegion(new Region("lala", null, null, null));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 }
