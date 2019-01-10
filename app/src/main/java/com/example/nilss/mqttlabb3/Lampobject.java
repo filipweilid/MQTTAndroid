@@ -7,6 +7,7 @@ public class Lampobject {
     private String hue;
     private String onoff;
     private String id;
+    private Boolean inRange;
 
     public Lampobject(String id, String sat, String bri, String hue, String onoff){
         this.id = id;
@@ -14,10 +15,27 @@ public class Lampobject {
         this.bri = bri;
         this.hue = hue;
         this.onoff = onoff;
+        setInRange(onoff);
     }
 
+
+    public void setInRange(String onoff){
+        if(onoff.equals("true")){
+            inRange = true;
+        }else{
+            inRange = false;
+        }
+    }
     public String getSat() {
         return sat;
+    }
+
+    public void setInRange(Boolean inRange) {
+        this.inRange = inRange;
+    }
+
+    public Boolean getInRange() {
+        return inRange;
     }
 
     public void setSat(String sat) {
@@ -58,6 +76,6 @@ public class Lampobject {
 
     @Override
     public String toString() {
-        return "{\"on\":"+onoff+", \"sat\":"+sat+", \"bri\":"+bri+",\"hue\":"+hue+"}";
+        return "{\"on\":"+onoff+", \"sat\":"+sat+", \"bri\":"+bri+",\"hue\":"+hue+"}*";
     }
 }

@@ -23,6 +23,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="on/off" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="send command"
+            android:textSize="10sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -35,6 +43,7 @@
             android:id="@+id/textSat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingBottom="14dp"
             android:text="Sat"
             android:textSize="12sp" />
 
@@ -42,6 +51,7 @@
             android:id="@+id/textBri"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingBottom="14dp"
             android:text="Bri"
             android:textSize="12sp" />
 
@@ -49,29 +59,33 @@
             android:id="@+id/textHue"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingBottom="14dp"
             android:text="Hue" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="6"
         android:orientation="vertical">
 
         <SeekBar
             android:id="@+id/seekBarSat"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:paddingBottom="13dp" />
 
         <SeekBar
             android:id="@+id/seekBarBri"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:paddingBottom="13dp" />
 
         <SeekBar
             android:id="@+id/seekBarHue"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:paddingBottom="13dp" />
     </LinearLayout>
 
 </LinearLayout>
