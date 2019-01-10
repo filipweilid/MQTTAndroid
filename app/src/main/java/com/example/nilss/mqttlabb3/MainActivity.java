@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -33,11 +34,15 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private static final String TAG = "MainActivity";
@@ -57,8 +62,11 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private String password = "GadV6ZHExG7T";
     private BeaconManager beaconManager;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
-    private final String lamptopic = "Lamp_1";
+    private final String lamptopic = "Lamp_status";
     private List<Lampobject> lamps = new ArrayList(); //info of all lamps
+    BeaconTimer timerLamp1;
+    BeaconTimer timerLamp2;
+    BeaconTimer timerLamp3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
         beaconManager.bind(this);
         initiateLamps();
         recyclerView = findViewById(R.id.rvView);
-        rvAdapter = new ListAdapter(this, lamps);
+        rvAdapter = new ListAdapter(this, lamps, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.addItemDecoration(new MyItemDecoration(this));
         recyclerView.setAdapter(rvAdapter);
@@ -109,24 +117,27 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     }
 
     private void initiateLamps(){
-        Lampobject lamp1 = new Lampobject("Lamp1","0","0","0","false");
-        Lampobject lamp2 = new Lampobject("Lamp2","0","0","0","false");
-        Lampobject lamp3 = new Lampobject("Lamp3","0","0","0","false");
+        Lampobject lamp1 = new Lampobject("Lamp1","5","10","20","false");
+        Lampobject lamp2 = new Lampobject("Lamp2","100","20","50","false");
+        Lampobject lamp3 = new Lampobject("Lamp3","30","30","30","false");
+        Lampobject lamp4 = new Lampobject("GroupConfig", "0", "0", "0", "true");
         lamps.add(lamp1);
         lamps.add(lamp2);
         lamps.add(lamp3);
+        lamps.add(lamp4);
     }
 
-    private void configureAll(){
+    public String configureAll(){
         String message = "";
-        for(int i = 0;i <= lamps.size(); i ++){
-            message += lamps.get(i).toString();
+        for(int i = 0;i < rvAdapter.getContent().size()-1; i ++){
+            message += rvAdapter.getContent().get(i).toString();
         }
+        return message;
     }
 
-    private void configureOne(int id){
+    public void configureOne(int id){
         String message = "";
-        message += lamps.get(id-1).toString();
+        message += rvAdapter.getContent().get(id-1).toString();
     }
 
     @Override
@@ -186,15 +197,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
         }
     }
 
-    private void publish() {
-        //String topic = etTopic.getText().toString();
-        String topic = lamptopic;
-        //String message = etMessage.getText().toString();
-        String message = "{\"on\":true, \"sat\":54, \"bri\":54,\"hue\":5000}";
-        etMessage.setText("");
+    public void publish() {
+        String message = configureAll();
+        String topic = "Lamp_set";
+        Log.v(TAG, message);
         try {
             MqttMessage mqttMessage = new MqttMessage(message.getBytes());
-            client.publish(topic, mqttMessage);
+            client.publish(topic, message.getBytes(),1,true);
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -231,7 +240,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                tvMessage.setText(message.toString());
+                //tvMessage.setText(message.toString());
+                Log.v(TAG, message.toString());
+                try {
+                    messageDecodes(message.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -239,6 +254,25 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
 
             }
         });
+    }
+
+    public void messageDecodes(String message) throws JSONException {
+        String[] lamplist;
+        lamplist = message.split("\\*");
+
+        for(int i = 0; i <3; i ++) {
+            String[] lamp = lamplist[i].split(",");
+            Log.v(TAG, i + lamp[0] +" " + lamp[1] + " " +lamp[2] + " " + lamp[3]);
+
+            lamps.get(i).setOnoff(lamp[0]);
+            lamps.get(i).setBri(lamp[1]);
+            lamps.get(i).setHue(lamp[2]);
+            lamps.get(i).setSat(lamp[3]);
+        }
+        rvAdapter.setContent(lamps);
+        //rvAdapter.notifyDataSetChanged();
+        Toast.makeText(this, "Message recieved from broker",
+                Toast.LENGTH_LONG).show();
     }
 
     public void onDestroy(){
@@ -252,30 +286,86 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Iterator iter = beacons.iterator();
-                ConstraintLayout constraintLayout = findViewById(R.id.container);
+                //ConstraintLayout constraintLayout = findViewById(R.id.container);
                 while(iter.hasNext()){
                     Beacon beacon = (Beacon) iter.next();
+                    Log.v(TAG, beacon.getId1().toString());
                     if(beacon.getId1().toString().equals(BeaconID)) {
                         Log.i(TAG, "The first beacon I see is about "+beacon.getDistance()+" meters away." + beacon.getId1());
                         if(beacon.getId2().toString().equals("0")) {
-                            constraintLayout.setBackgroundColor(Color.RED);
+                            //constraintLayout.setBackgroundColor(Color.RED);
+                            rvAdapter.getContent().get(0).setInRange(true);
+                            if(timerLamp1==null){
+                                timerLamp1 = new BeaconTimer("0");
+                                timerLamp1.startTimer();
+                            }else{
+                                timerLamp1.terminate();
+                                timerLamp1 = new BeaconTimer("0");
+                                timerLamp1.startTimer();
+                            }
                         }
                         if(beacon.getId2().toString().equals("1")) {
-                            constraintLayout.setBackgroundColor(Color.GREEN);
+                            //constraintLayout.setBackgroundColor(Color.GREEN);
+                            rvAdapter.getContent().get(1).setInRange(true);
+                            if(timerLamp2==null){
+                                timerLamp2 = new BeaconTimer("1");
+                                timerLamp2.startTimer();
+                            }else{
+                                timerLamp2.terminate();
+                                timerLamp2 = new BeaconTimer("1");
+                                timerLamp2.startTimer();
+                            }
                         }
                         if(beacon.getId2().toString().equals("2")) {
-                            constraintLayout.setBackgroundColor(Color.BLUE);
+                            //constraintLayout.setBackgroundColor(Color.BLUE);
+                            rvAdapter.getContent().get(2).setInRange(true);
+                            if(timerLamp3==null){
+                                timerLamp3 = new BeaconTimer("2");
+                                timerLamp3.startTimer();
+                            }else{
+                                timerLamp3.terminate();
+                                timerLamp3 = new BeaconTimer("2");
+                                timerLamp3.startTimer();
+                            }
                         }
+                        rvAdapter.notifyDataSetChanged();
                     }
-
                 }
             }
         });
-
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
-
-
         } catch (RemoteException e) {    }
+    }
+
+    private class BeaconTimer extends TimerTask{
+        Timer timer;
+        String identifier;
+
+        public BeaconTimer(String identifier){
+            this.timer = new Timer();
+            this.identifier = identifier;
+        }
+
+        public void terminate(){
+            timer.cancel();
+            timer.purge();
+        }
+
+        public void startTimer(){
+            timer.schedule(this, 1000*10);
+            Log.v(TAG, "STARTING TIMER");
+        }
+        @Override
+        public void run() {
+            rvAdapter.getContent().get(Integer.parseInt(identifier)).setInRange(false);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.v(TAG, "DISABLE LAMP");
+                    rvAdapter.notifyDataSetChanged();
+                }
+            });
+        }
     }
 }

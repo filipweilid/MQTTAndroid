@@ -25,6 +25,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
     private Context context;
     private List<Lampobject> content = new ArrayList<>();
     private MainActivity activity;
+    private Boolean recieveOk = true;
 
     public ListAdapter(Context context, MainActivity activity){
         this(context, new ArrayList<>(),activity );
@@ -66,11 +67,11 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             holder.onoff.setChecked(false);
             holder.onoff.setText("off");
         }
-        holder.seekBarSat.setProgress(Integer.parseInt(content.get(position).getSat()));
+        //holder.seekBarSat.setProgress(Integer.parseInt(content.get(position).getSat()));
         holder.sat.setText("Sat: " + content.get(position).getSat());
-        holder.seekBarHue.setProgress(Integer.parseInt(content.get(position).getHue()));
+        //holder.seekBarHue.setProgress(Integer.parseInt(content.get(position).getHue()));
         holder.hue.setText("Hue: "+ content.get(position).getHue());
-        holder.seekBarBri.setProgress(Integer.parseInt(content.get(position).getBri()));
+        //holder.seekBarBri.setProgress(Integer.parseInt(content.get(position).getBri()));
         holder.bri.setText("Bri: "+ content.get(position).getBri());
         //holder.interactOff();
         if(content.get(position).getInRange()){
@@ -126,7 +127,6 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
 
                 @Override
                 public void onStartTrackingTouch(SeekBar seekBar) {
-
                 }
 
                 @Override
@@ -141,6 +141,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     hue.setText("Hue "+ progress);
+                    content.get(getAdapterPosition()).setHue(String.valueOf(progress));
                 }
 
                 @Override
@@ -150,8 +151,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
-                    int progress = seekBar.getProgress();
-                    content.get(getAdapterPosition()).setHue(String.valueOf(progress));
+                    //int progress = seekBar.getProgress();
+                    //content.get(getAdapterPosition()).setHue(String.valueOf(progress));
                 }
             });
 
