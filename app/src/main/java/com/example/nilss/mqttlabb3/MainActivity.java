@@ -10,6 +10,8 @@ import android.os.RemoteException;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,22 +34,31 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     private static final String TAG = "MainActivity";
     private static final String BeaconID = "88888888-8888-8888-8888-888888888888";
-    private String serverAndPort = "tcp://m21.cloudmqtt.com:18431";
+    //private String serverAndPort = "tcp://m21.cloudmqtt.com:18431";
+    private String serverAndPort = "tcp://m20.cloudmqtt.com:13789";
     private MqttAndroidClient client;
     private Button publishBtn;
     private Button subBtn;
     private EditText etMessage, etTopic;
     private TextView tvMessage;
-    private String username = "splbrgpc";
-    private String password = "Ef3r5zQAS7k4";
+    private RecyclerView recyclerView;
+    private ListAdapter rvAdapter;
+    //private String username = "splbrgpc";
+    //private String password = "Ef3r5zQAS7k4";
+    private String username = "cadobfeg";
+    private String password = "GadV6ZHExG7T";
     private BeaconManager beaconManager;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+    private final String lamptopic = "Lamp_1";
+    private List<Lampobject> lamps = new ArrayList(); //info of all lamps
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +67,16 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
         beaconManager.bind(this);
+        initiateLamps();
+        recyclerView = findViewById(R.id.rvView);
+        rvAdapter = new ListAdapter(this, lamps);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.addItemDecoration(new MyItemDecoration(this));
+        recyclerView.setAdapter(rvAdapter);
         publishBtn = findViewById(R.id.publishBtn);
         subBtn = findViewById(R.id.subBtn);
         etMessage = findViewById(R.id.etMessage);
         etTopic = findViewById(R.id.etTopic);
-        tvMessage = findViewById(R.id.tvMessage);
         publishBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,6 +106,27 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
                 builder.show();
             }
         }
+    }
+
+    private void initiateLamps(){
+        Lampobject lamp1 = new Lampobject("Lamp1","0","0","0","false");
+        Lampobject lamp2 = new Lampobject("Lamp2","0","0","0","false");
+        Lampobject lamp3 = new Lampobject("Lamp3","0","0","0","false");
+        lamps.add(lamp1);
+        lamps.add(lamp2);
+        lamps.add(lamp3);
+    }
+
+    private void configureAll(){
+        String message = "";
+        for(int i = 0;i <= lamps.size(); i ++){
+            message += lamps.get(i).toString();
+        }
+    }
+
+    private void configureOne(int id){
+        String message = "";
+        message += lamps.get(id-1).toString();
     }
 
     @Override
@@ -150,8 +187,10 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     }
 
     private void publish() {
-        String topic = etTopic.getText().toString();
-        String message = etMessage.getText().toString();
+        //String topic = etTopic.getText().toString();
+        String topic = lamptopic;
+        //String message = etMessage.getText().toString();
+        String message = "{\"on\":true, \"sat\":54, \"bri\":54,\"hue\":5000}";
         etMessage.setText("");
         try {
             MqttMessage mqttMessage = new MqttMessage(message.getBytes());
@@ -162,7 +201,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
     }
 
     private void subscribe() {
-        String topic = etTopic.getText().toString();
+        //String topic = etTopic.getText().toString();
+        String topic = lamptopic;
         int qos = 1;
         try {
             IMqttToken subToken = client.subscribe(topic, qos);
@@ -229,9 +269,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
                     }
 
                 }
-                /*if (beacons.size() > 0) {
-                    Log.i(TAG, "The first beacon I see is about "+beacons.iterator().next().getDistance()+" meters away." + beacons.iterator().next().getId1());
-                }*/
             }
         });
 
