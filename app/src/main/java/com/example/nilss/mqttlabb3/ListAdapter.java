@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -132,7 +133,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
                     int progress = seekBar.getProgress();
-                    content.get(getAdapterPosition()).setBri(String.valueOf(progress));
+                    Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
+                    if(getAdapterPosition() != -1)
+                        content.get(getAdapterPosition()).setBri(String.valueOf(progress));
                 }
             });
 
@@ -141,7 +144,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     hue.setText("Hue "+ progress);
-                    content.get(getAdapterPosition()).setHue(String.valueOf(progress));
+                    Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
+                    if(getAdapterPosition() != -1)
+                        content.get(getAdapterPosition()).setHue(String.valueOf(progress));
                 }
 
                 @Override
@@ -171,7 +176,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
                     int progress = seekBar.getProgress();
-                    content.get(getAdapterPosition()).setSat(String.valueOf(progress));
+                    Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
+                    if(getAdapterPosition() != -1)
+                        content.get(getAdapterPosition()).setSat(String.valueOf(progress));
                 }
             });
 
