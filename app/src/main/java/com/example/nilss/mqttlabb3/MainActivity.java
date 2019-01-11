@@ -261,13 +261,14 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
         lamplist = message.split("\\*");
 
         for(int i = 0; i <3; i ++) {
-            String[] lamp = lamplist[i].split(",");
-            Log.v(TAG, i + lamp[0] +" " + lamp[1] + " " +lamp[2] + " " + lamp[3]);
-
-            lamps.get(i).setOnoff(lamp[0]);
-            lamps.get(i).setBri(lamp[1]);
-            lamps.get(i).setHue(lamp[2]);
-            lamps.get(i).setSat(lamp[3]);
+            if(lamps.get(i).getInRange()){
+                String[] lamp = lamplist[i].split(",");
+                Log.v(TAG, i + lamp[0] +" " + lamp[1] + " " +lamp[2] + " " + lamp[3]);
+                lamps.get(i).setOnoff(lamp[0]);
+                lamps.get(i).setBri(lamp[1]);
+                lamps.get(i).setHue(lamp[2]);
+                lamps.get(i).setSat(lamp[3]);
+            }
         }
         rvAdapter.setContent(lamps);
         //rvAdapter.notifyDataSetChanged();
