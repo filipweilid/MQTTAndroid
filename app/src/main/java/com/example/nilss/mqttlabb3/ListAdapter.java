@@ -28,9 +28,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
     private List<Lampobject> content = new ArrayList<>();
     private MainActivity activity;
     private Boolean recieveOk = true;
-    private double hueScaling = 2.54;
+    private double hueScaling = 655.35;
     private double satScaling = 2.54;
-    private double briScaling = 655.35; //65535
+    private double briScaling = 2.54; //65535
 
     public ListAdapter(Context context, MainActivity activity){
         this(context, new ArrayList<>(),activity );
