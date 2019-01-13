@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.graphics.Color.GRAY;
+import static android.graphics.Color.valueOf;
 
 public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
     private LayoutInflater inflater;
@@ -27,6 +28,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
     private List<Lampobject> content = new ArrayList<>();
     private MainActivity activity;
     private Boolean recieveOk = true;
+    private double hueScaling = 2.54;
+    private double satScaling = 2.54;
+    private double briScaling = 655.35; //65535
 
     public ListAdapter(Context context, MainActivity activity){
         this(context, new ArrayList<>(),activity );
@@ -63,10 +67,10 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
         holder.lampId.setText(content.get(position).getId());
         if(content.get(position).getOnoff().equals("true")){
             holder.onoff.setChecked(true);
-            holder.onoff.setText("on");
+            holder.onoff.setText("On");
         }else{
             holder.onoff.setChecked(false);
-            holder.onoff.setText("off");
+            holder.onoff.setText("Off");
         }
         //holder.seekBarSat.setProgress(Integer.parseInt(content.get(position).getSat()));
         holder.sat.setText("Sat: " + content.get(position).getSat());
@@ -123,7 +127,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             seekBarBri.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    bri.setText("Bri "+ progress);
+                    bri.setText("Bri "+ (Math.round(progress*briScaling)));
                 }
 
                 @Override
@@ -135,7 +139,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                     int progress = seekBar.getProgress();
                     Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
                     if(getAdapterPosition() != -1)
-                        content.get(getAdapterPosition()).setBri(String.valueOf(progress));
+                        content.get(getAdapterPosition()).setBri(String.valueOf(Math.round(progress*briScaling)));
                 }
             });
 
@@ -143,10 +147,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             seekBarHue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    hue.setText("Hue "+ progress);
-                    Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
-                    if(getAdapterPosition() != -1)
-                        content.get(getAdapterPosition()).setHue(String.valueOf(progress));
+                    hue.setText("Hue "+ Math.round(progress*hueScaling));
                 }
 
                 @Override
@@ -156,8 +157,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
-                    //int progress = seekBar.getProgress();
-                    //content.get(getAdapterPosition()).setHue(String.valueOf(progress));
+                    Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
+                    if(getAdapterPosition() != -1)
+                        content.get(getAdapterPosition()).setHue(String.valueOf(Math.round(seekBar.getProgress()*hueScaling)));
                 }
             });
 
@@ -165,7 +167,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             seekBarSat.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    sat.setText("Sat "+ progress);
+                    sat.setText("Sat "+ Math.round(progress*satScaling));
                 }
 
                 @Override
@@ -178,7 +180,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                     int progress = seekBar.getProgress();
                     Log.i("AdapterPosition", String.valueOf(getAdapterPosition()));
                     if(getAdapterPosition() != -1)
-                        content.get(getAdapterPosition()).setSat(String.valueOf(progress));
+                        content.get(getAdapterPosition()).setSat(String.valueOf(Math.round(progress*satScaling)));
                 }
             });
 
@@ -187,10 +189,10 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     if(isChecked){
                         content.get(getAdapterPosition()).setOnoff("true");
-                        onoff.setText("on");
+                        onoff.setText("On");
                     }else{
                         content.get(getAdapterPosition()).setOnoff("false");
-                        onoff.setText("off");
+                        onoff.setText("Off");
                     }
                 }
             });
@@ -204,6 +206,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             seekBarSat.setClickable(false);
             seekBarSat.setEnabled(false);
             onoff.setClickable(false);
+            onoff.setEnabled(false);
             btn.setClickable(false);
             btn.setEnabled(false);
         }
@@ -216,6 +219,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
             seekBarSat.setClickable(true);
             seekBarSat.setEnabled(true);
             onoff.setClickable(true);
+            onoff.setEnabled(true);
             btn.setClickable(true);
             btn.setEnabled(true);
         }

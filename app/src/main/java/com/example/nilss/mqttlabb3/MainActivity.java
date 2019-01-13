@@ -240,10 +240,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                //tvMessage.setText(message.toString());
                 Log.v(TAG, message.toString());
                 try {
-                    messageDecodes(message.toString());
+                    messageDecodes(message.toString()); //Decode message from broker
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -271,7 +270,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer{
             }
         }
         rvAdapter.setContent(lamps);
-        //rvAdapter.notifyDataSetChanged();
         Toast.makeText(this, "Message recieved from broker",
                 Toast.LENGTH_LONG).show();
     }
