@@ -52,6 +52,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
         return this.content;
     }
 
+
+
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -62,8 +64,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        holder.itemView.setFocusable(false);
-        holder.itemView.setClickable(false);
+        //holder.itemView.setFocusable(false);
+        //holder.itemView.setClickable(false);
         holder.lampId.setText(content.get(position).getId());
         if(content.get(position).getOnoff().equals("true")){
             holder.onoff.setChecked(true);
@@ -188,11 +190,15 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     if(isChecked){
-                        content.get(getAdapterPosition()).setOnoff("true");
-                        onoff.setText("On");
+                        if(getAdapterPosition()>=0) {
+                            content.get(getAdapterPosition()).setOnoff("true");
+                            onoff.setText("On");
+                        }
                     }else{
-                        content.get(getAdapterPosition()).setOnoff("false");
-                        onoff.setText("Off");
+                        if(getAdapterPosition()>=0){
+                            content.get(getAdapterPosition()).setOnoff("false");
+                            onoff.setText("Off");
+                        }
                     }
                 }
             });
@@ -225,9 +231,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.Holder>{
         }
 
         public void setAllValues(){
-            int sat = seekBarSat.getProgress();
-            int hue = seekBarHue.getProgress();
-            int bri = seekBarBri.getProgress();
+            int sat = (int)Math.round(seekBarSat.getProgress()*satScaling);
+            int hue = (int)Math.round(seekBarHue.getProgress()*hueScaling);
+            int bri = (int)Math.round(seekBarBri.getProgress()*briScaling);
             boolean mode = onoff.isChecked();
             int lampsoff = 0;
             for(int i = 0; i < content.size(); i ++){
